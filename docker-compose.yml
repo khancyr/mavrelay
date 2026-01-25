@@ -1,0 +1,89 @@
+services:
+  homepage:
+    build:
+      context: ./homepage
+      dockerfile: homepage.Dockerfile
+    container_name: homepage
+    restart: unless-stopped
+    network_mode: "host"
+    depends_on:
+      - mediamtx
+      - mavlink-server
+      - mavlink-camera-manager
+      - cockpit
+
+  zerotier:
+    image: zerotier/zerotier:latest
+    container_name: zerotier
+    restart: unless-stopped
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - /var/lib/zerotier-one:/var/lib/zerotier-one
+    command: ${ZEROTIER_NETWORK_ID}
+
+  # mavlink2rest:
+  #   build:
+  #     context: ./mavlink2rest
+  #     dockerfile: Dockerfile
+  #     args:
+  #       TARGET_ARCH: x86_64-unknown-linux-musl
+  #   container_name: mavlink2rest
+  #   restart: unless-stopped
+  #   network_mode: "host"
+  #   # Expose REST API and WebSocket on 8080 by default
+
+  mavlink-server:
+    build:
+      context: ./mavlink-server
+      dockerfile: Dockerfile
+      args:
+        TARGET_ARCH: x86_64-unknown-linux-musl
+    container_name: mavlink-server
+    restart: unless-stopped
+    network_mode: "host"
+    command: udpserver://0.0.0.0:14550 tcpserver://0.0.0.0:5777
+    # Expose REST API and WebSocket on 8080 by default
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml
+
+  mavlink-camera-manager:
+    build:
+      context: ./mavlink-camera-manager
+      dockerfile: Dockerfile
+      args:
+        TARGET_ARCH: x86_64-unknown-linux-musl
+    container_name: mavlink-camera-manager
+    restart: unless-stopped
+    network_mode: "host"
+    privileged: true
+    depends_on:
+      - mediamtx
+      - mavlink-server
+    volumes:
+      - ./mavlink-camera-manager/config:/mavlink/config
+
+  cockpit:
+    image: bluerobotics/cockpit:latest
+    container_name: cockpit
+    restart: unless-stopped
+    network_mode: "host"
+    volumes:
+      - ./cockpit-lite:/config
+    environment:
+      - COCKPIT_CONFIG=/config/config.json
+    depends_on:
+      - mavlink-server
+      - mavlink-camera-manager
+
+# All services share the zerotier network for secure VPN communication.

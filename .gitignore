@@ -1,3 +1,5 @@
+### Ignore camera-manager runtime config
+mavlink-camera-manager/config/settings.json
 __pycache__/
 *.pyc
 *.pyo

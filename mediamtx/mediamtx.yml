@@ -1,0 +1,26 @@
+# Example MediaMTX config for drone RTSP relay
+rtsp: yes
+rtspAddress: :8554
+rtmp: yes
+rtmpAddress: :1935
+hls: yes
+hlsAddress: :8888
+
+paths:
+  # drone:
+  #   source: rtsp://<DRONE_ZEROTIER_IP>:8554/drone
+  #   sourceOnDemand: yes
+
+
+# WebRTC settings
+webrtcAdditionalHosts: [localhost, 127.0.0.1, 0.0.0.0]
+webrtcAddress: :8889
+webrtcICEServers2:
+  - url: stun:stun.l.google.com:19302
+
+# Disable unused features
+api: false
+metrics: false
+pprof: false
+
+logLevel: info

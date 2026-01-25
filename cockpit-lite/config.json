@@ -1,0 +1,8 @@
+{
+  "mavlink": {
+    "endpoint": "ws://0.0.0.0:8080/ws"
+  },
+  "camera_manager": {
+    "endpoint": "http://0.0.0.0:8282"
+  }
+}
