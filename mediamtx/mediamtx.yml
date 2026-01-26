@@ -6,10 +6,14 @@ rtmpAddress: :1935
 hls: yes
 hlsAddress: :8888
 
+pathDefaults:
+  source: publisher
+
 paths:
   # drone:
   #   source: rtsp://<DRONE_ZEROTIER_IP>:8554/drone
   #   sourceOnDemand: yes
+  all_others:
 
 
 # WebRTC settings

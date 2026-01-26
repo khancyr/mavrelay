@@ -55,7 +55,7 @@ services:
     network_mode: "host"
     privileged: true
     volumes:
-      - ./mediamtx/mediamtx.yml:/mediamtx.yml
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
 
   mavlink-camera-manager:
     build:
