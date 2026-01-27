@@ -1,0 +1,45 @@
+# Example override to disable Traefik and expose service ports directly
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.8'
+
+services:
+  traefik:
+    # Disable traefik service
+    deploy:
+      replicas: 0
+    # Or simply comment out the whole service
+    # image: traefik ...
+    # ...
+
+  homepage:
+    labels: []
+    ports:
+      - "8000:8000"
+    environment:
+      - TRAEFIK_DOMAIN=
+
+  mediamtx:
+    labels: []
+    ports:
+      - "8554:8554"   # RTSP
+      - "8889:8889"   # WebRTC HTTP
+
+  mavlink-server:
+    labels: []
+    ports:
+      - "8080:8080"   # HTTP/WebSocket
+
+  mavlink-camera-manager:
+    labels: []
+    ports:
+      - "6020:6020"   # HTTP
+      - "6021:6021"   # WebSocket
+
+  cockpit:
+    labels: []
+    ports:
+      - "8000:80"
+
+# This override disables Traefik and exposes all service ports directly for local/LAN access.
+# The homepage will show local (non-HTTPS) links when TRAEFIK_DOMAIN is unset.

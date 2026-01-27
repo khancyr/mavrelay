@@ -1,4 +1,31 @@
 services:
+
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    restart: unless-stopped
+    network_mode: "host"
+    command:
+      - --configFile=/traefik/traefik.yml
+    volumes:
+      - ./traefik/traefik.yml:/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/traefik`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-stripprefix"
+      - "traefik.http.middlewares.traefik-dashboard-stripprefix.stripprefix.prefixes=/traefik"
+
   homepage:
     build:
       context: ./homepage
@@ -11,6 +38,12 @@ services:
       - mavlink-server
       - mavlink-camera-manager
       - cockpit
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.services.homepage.loadbalancer.server.port=8081"
 
   zerotier:
     image: zerotier/zerotier:latest
@@ -47,6 +80,16 @@ services:
     network_mode: "host"
     command: udpserver://0.0.0.0:14550 tcpserver://0.0.0.0:5777
     # Expose REST API and WebSocket on 8080 by default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mavlink-server.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/mavlink-server`)"
+      - "traefik.http.routers.mavlink-server.entrypoints=websecure"
+      - "traefik.http.routers.mavlink-server.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mavlink-server.loadbalancer.server.port=8080"
+      - "traefik.http.routers.mavlink-server-ws.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/mavlink-server-ws`)"
+      - "traefik.http.routers.mavlink-server-ws.entrypoints=websecure"
+      - "traefik.http.routers.mavlink-server-ws.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mavlink-server-ws.loadbalancer.server.port=8080"
 
   mediamtx:
     image: bluenviron/mediamtx:latest
@@ -56,6 +99,12 @@ services:
     privileged: true
     volumes:
       - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mediamtx.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/mediamtx`)"
+      - "traefik.http.routers.mediamtx.entrypoints=websecure"
+      - "traefik.http.routers.mediamtx.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mediamtx.loadbalancer.server.port=8889"
 
   mavlink-camera-manager:
     build:
@@ -72,6 +121,16 @@ services:
       - mavlink-server
     volumes:
       - ./mavlink-camera-manager/config:/mavlink/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.camera-manager.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/camera-manager`)"
+      - "traefik.http.routers.camera-manager.entrypoints=websecure"
+      - "traefik.http.routers.camera-manager.tls.certresolver=letsencrypt"
+      - "traefik.http.services.camera-manager.loadbalancer.server.port=6020"
+      - "traefik.http.routers.camera-manager-ws.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/camera-manager-ws`)"
+      - "traefik.http.routers.camera-manager-ws.entrypoints=websecure"
+      - "traefik.http.routers.camera-manager-ws.tls.certresolver=letsencrypt"
+      - "traefik.http.services.camera-manager-ws.loadbalancer.server.port=6021"
 
   cockpit:
     image: bluerobotics/cockpit:latest
@@ -85,5 +144,11 @@ services:
     depends_on:
       - mavlink-server
       - mavlink-camera-manager
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cockpit.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/cockpit`)"
+      - "traefik.http.routers.cockpit.entrypoints=websecure"
+      - "traefik.http.routers.cockpit.tls.certresolver=letsencrypt"
+      - "traefik.http.services.cockpit.loadbalancer.server.port=8080"
 
 # All services share the zerotier network for secure VPN communication.

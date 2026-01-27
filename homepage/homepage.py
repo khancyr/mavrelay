@@ -1,6 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-HTML = '''
+
+import os
+
+HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +11,7 @@ HTML = '''
     <title>MavRelay Home</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        body {{
             font-family: 'Roboto', Arial, sans-serif;
             background: linear-gradient(120deg, #e0eafc, #cfdef3 100%);
             margin: 0;
@@ -16,8 +19,8 @@ HTML = '''
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-        .container {
+        }}
+        .container {{
             background: #fff;
             margin-top: 3em;
             padding: 2.5em 2em 2em 2em;
@@ -26,23 +29,23 @@ HTML = '''
             max-width: 480px;
             width: 100%;
             text-align: center;
-        }
-        .logo {
+        }}
+        .logo {{
             max-width: 220px;
             margin-bottom: 1.5em;
-        }
-        h1 {
+        }}
+        h1 {{
             color: #1a2634;
             font-size: 2.2em;
             margin-bottom: 0.5em;
             letter-spacing: 1px;
-        }
-        ul {
+        }}
+        ul {{
             list-style: none;
             padding: 0;
             margin: 2em 0 1em 0;
-        }
-        ul li {
+        }}
+        ul li {{
             background: #f5f8fa;
             margin: 0.5em 0;
             padding: 1em 1.2em;
@@ -50,46 +53,38 @@ HTML = '''
             font-size: 1.08em;
             box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.06);
             transition: background 0.2s;
-        }
-        ul li:hover {
+        }}
+        ul li:hover {{
             background: #eaf3fb;
-        }
-        a {
+        }}
+        a {{
             color: #1976d2;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
-        }
-        a:hover {
+        }}
+        a:hover {{
             color: #0d47a1;
             text-decoration: underline;
-        }
-        .info {
+        }}
+        .info {{
             margin-top: 2.5em;
             color: #555;
             font-size: 0.98em;
-        }
-        @media (max-width: 600px) {
-            .container { padding: 1em; }
-            h1 { font-size: 1.3em; }
-        }
+        }}
+        @media (max-width: 600px) {{
+            .container {{ padding: 1em; }}
+            h1 {{ font-size: 1.3em; }}
+        }}
     </style>
 </head>
 <body>
     <div class="container">
         <img src="https://www.ardupilot.org/assets/images/ardupilot_logo_2017.png" alt="ArduPilot Logo" class="logo" />
         <h1>MavRelay Home</h1>
-        <ul>
-            <li><a href="http://localhost:8889/">MediaMTX WebRTC (port 8889)</a></li>
-            <li>RTSP feed available at <b>rtsp://localhost:8554/</b> (port 8554)</li>
-            <li>Mavlink2Rest WebSocket: <b>ws://localhost:8080/v1/rest/ws</b></li>
-            <li>Mavlink2Rest Web UI: <a href="http://localhost:8080/">http://localhost:8080/</a></li>
-            <li>Mavlink-Camera-Manager WebRTC: <b>ws://localhost:6021</b></li>
-            <li>Mavlink-Camera-Manager Config: <a href="http://localhost:6020/">http://localhost:6020/</a></li>
-            <li><a href="http://localhost:8000/">Cockpit (port 8000)</a></li>
-        </ul>
+        {links}
         <div class="info">
-            <p>All links assume you are accessing from the host machine. Replace <b>localhost</b> with your server IP if needed.</p>
+            <p>Links are generated for your current access method. If you have a domain, HTTPS links are shown. Otherwise, local links are provided.</p>
         </div>
     </div>
 </body>
@@ -97,22 +92,40 @@ HTML = '''
 '''
 
 
+
+
 class HomeHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         host = self.headers.get('Host', 'localhost')
-        # Extract just the hostname (strip port)
         host_ip = host.split(':')[0]
-        # Use the same port as in the Host header for homepage, else default to 8081
-        # homepage_port = host.split(':')[1] if ':' in host else '8081'
-        # Compose URLs with the detected host
-        html = HTML.replace('localhost:8889', f'{host_ip}:8889') \
-            .replace('localhost:8554', f'{host_ip}:8554') \
-            .replace('localhost:8080', f'{host_ip}:8080') \
-            .replace('localhost:6021', f'{host_ip}:6021') \
-            .replace('localhost:6020', f'{host_ip}:6020') \
-            .replace('localhost:8000', f'{host_ip}:8000')
-        html = html.replace('rtsp://localhost:', f'rtsp://{host_ip}:')
-        html = html.replace('ws://localhost:', f'ws://{host_ip}:')
+        domain = os.environ.get('TRAEFIK_DOMAIN', '').strip()
+        # HTTPS/WSS links if domain is set
+        if domain and domain != 'your.domain.com':
+            links = f'''
+            <ul>
+                <li><a href="https://{domain}/mediamtx">MediaMTX WebRTC (HTTPS, port 8889)</a></li>
+                <li>RTSP feed available at <b>rtsp://{domain}:8554/</b> (port 8554)</li>
+                <li>Mavlink-Server WebSocket: <b>wss://{domain}/mavlink-server-ws/v1/rest/ws</b></li>
+                <li>Mavlink-Server Web UI: <a href="https://{domain}/mavlink-server">https://{domain}/mavlink-server</a></li>
+                <li>Mavlink-Camera-Manager WebRTC: <b>wss://{domain}/camera-manager-ws</b></li>
+                <li>Mavlink-Camera-Manager Config: <a href="https://{domain}/camera-manager">https://{domain}/camera-manager</a></li>
+                <li><a href="https://{domain}/cockpit">Cockpit (HTTPS)</a></li>
+                <li><a href="https://{domain}:8082/traefik">Traefik Dashboard (HTTPS, 8082)</a></li>
+            </ul>
+            '''
+        else:
+            links = f'''
+            <ul>
+                <li><a href="http://{host_ip}:8889/">MediaMTX WebRTC (HTTP, port 8889)</a></li>
+                <li>RTSP feed available at <b>rtsp://{host_ip}:8554/</b> (port 8554)</li>
+                <li>Mavlink-Server WebSocket: <b>ws://{host_ip}:8080/v1/rest/ws</b></li>
+                <li>Mavlink-Server Web UI: <a href="http://{host_ip}:8080/">http://{host_ip}:8080/</a></li>
+                <li>Mavlink-Camera-Manager WebRTC: <b>ws://{host_ip}:6021</b></li>
+                <li>Mavlink-Camera-Manager Config: <a href="http://{host_ip}:6020/">http://{host_ip}:6020/</a></li>
+                <li><a href="http://{host_ip}:8000/">Cockpit (HTTP)</a></li>
+            </ul>
+            '''
+        html = HTML_TEMPLATE.format(links=links)
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
