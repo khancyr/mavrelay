@@ -1,8 +1,5 @@
 # Example override to disable Traefik and expose service ports directly
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
-
-version: '3.8'
-
 services:
   traefik:
     # Disable traefik service

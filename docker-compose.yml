@@ -13,6 +13,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
+      - OVH_ENDPOINT=${OVH_ENDPOINT}
+      - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
+      - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
+      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
@@ -89,7 +93,7 @@ services:
       - "traefik.http.routers.mavlink-server-ws.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/mavlink-server-ws`)"
       - "traefik.http.routers.mavlink-server-ws.entrypoints=websecure"
       - "traefik.http.routers.mavlink-server-ws.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mavlink-server-ws.loadbalancer.server.port=8080"
+      - "traefik.http.routers.mavlink-server-ws.service=mavlink-server"
 
   mediamtx:
     image: bluenviron/mediamtx:latest
@@ -130,6 +134,7 @@ services:
       - "traefik.http.routers.camera-manager-ws.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/camera-manager-ws`)"
       - "traefik.http.routers.camera-manager-ws.entrypoints=websecure"
       - "traefik.http.routers.camera-manager-ws.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.camera-manager-ws.service=camera-manager-ws"
       - "traefik.http.services.camera-manager-ws.loadbalancer.server.port=6021"
 
   cockpit:
