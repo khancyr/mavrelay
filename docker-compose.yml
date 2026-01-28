@@ -130,6 +130,7 @@ services:
       - "traefik.http.routers.camera-manager.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/camera-manager`)"
       - "traefik.http.routers.camera-manager.entrypoints=websecure"
       - "traefik.http.routers.camera-manager.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.camera-manager.service=camera-manager"
       - "traefik.http.services.camera-manager.loadbalancer.server.port=6020"
       - "traefik.http.routers.camera-manager-ws.rule=Host(`${TRAEFIK_DOMAIN}`) && PathPrefix(`/camera-manager-ws`)"
       - "traefik.http.routers.camera-manager-ws.entrypoints=websecure"
