@@ -77,7 +77,7 @@ HTML = '''
 </head>
 <body>
     <div class="container">
-        <img src="https://www.ardupilot.org/assets/images/ardupilot_logo_2017.png" alt="ArduPilot Logo" class="logo" />
+        <img src="https://ardupilot.org/images/ArduPilot-Motto.webp" alt="ArduPilot Logo" class="logo" />
         <h1>MavRelay Home</h1>
         <ul>
             <li><a href="http://localhost:8889/">MediaMTX WebRTC (port 8889)</a></li>
